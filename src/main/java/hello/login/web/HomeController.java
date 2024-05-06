@@ -1,15 +1,46 @@
 package hello.login.web;
 
+import hello.login.domain.member.Member;
+import hello.login.domain.member.MemberRepository;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
 
 @Slf4j
 @Controller
+@RequiredArgsConstructor
 public class HomeController {
 
-    @GetMapping("/")
+    private final MemberRepository memberRepository;
+
+    /*@GetMapping("/")
     public String home() {
         return "home";
+    }*/
+
+
+    // @CookieValue 를 사용하면 편리하게 쿠키를 조회할 수 있다.
+    // 로그인 하지 않은 사용자도 접근할 수 있기 때문에 required = false 이용
+    @GetMapping("/")
+    public String homeLogin(@CookieValue(name = "memberId", required = false) Long memberId, Model model){
+
+        // 로그인 쿠키가 없으면 home 으로
+        if(memberId == null){
+            return "home";
+        }
+
+        // 로그인 쿠키가 있어도 회원이 없으면 home 으로
+        Member loginMember = memberRepository.findById(memberId);
+        if(loginMember == null){
+            return "home";
+        }
+
+        // 로그인 쿠키가 있는 사용자는 로그인 사용자 전용 홈 화면인 loginHome 으로 보낸다.
+        // 화면에 회원 관련 정보를 출력해야 하므로, 모델에 담아서 member 데이터를 전달한다.
+        model.addAttribute("member", loginMember);
+        return "loginHome";
     }
 }
